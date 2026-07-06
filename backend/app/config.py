@@ -50,9 +50,11 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://*.vercel.app"
 
-    # Admin Auth
-    ADMIN_SECRET: str = "admin123"
-    ADMIN_TOKEN_EXPIRY_HOURS: int = 24
+    # Authentication (JWT)
+    SECRET_KEY: str = "your-super-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Groq API
     GROQ_API_KEY: str = ""

@@ -12,7 +12,9 @@ import EquipmentPage from './pages/Equipment';
 import AlertsPage from './pages/Alerts';
 import AIAssistant from './pages/AIAssistant';
 import SettingsPage from './pages/Settings';
+import ReportsPage from './pages/Reports';
 import AdminLogin from './pages/AdminLogin';
+import Register from './pages/Register';
 
 function App() {
   const { activePage, setActivePage } = useAppStore();
@@ -45,10 +47,14 @@ function App() {
         return <AlertsPage />;
       case 'ai_assistant':
         return <AIAssistant />;
+      case 'reports':
+        return <ReportsPage />;
       case 'settings':
         return isAdmin ? <SettingsPage /> : <AdminLogin />;
       case 'admin_login':
         return <AdminLogin />;
+      case 'register':
+        return <Register />;
       default:
         return <Dashboard />;
     }

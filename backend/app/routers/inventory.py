@@ -10,7 +10,8 @@ import numpy as np
 from app.database import get_db
 from app.models.inventory import InventoryItem, ForecastRecord
 from app.ml.inventory_forecasting import InventoryForecastModel
-from app.auth_deps import require_admin
+from app.core.permissions import require_admin
+from app.models.user import User
 
 router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
 
@@ -201,7 +202,7 @@ async def restock_item(
     item_id: int,
     quantity: int = 0,
     db: AsyncSession = Depends(get_db),
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Log a restock event."""
     result = await db.execute(select(InventoryItem).where(InventoryItem.id == item_id))

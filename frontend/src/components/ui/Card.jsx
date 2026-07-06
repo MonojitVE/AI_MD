@@ -5,7 +5,8 @@ const Card = ({
   children, 
   variant = 'dark', 
   className = '', 
-  style = {} 
+  style = {},
+  ...props
 }) => {
   const getClassName = () => {
     let base = 'card';
@@ -16,7 +17,7 @@ const Card = ({
   };
 
   return (
-    <div className={getClassName()} style={style}>
+    <div className={getClassName()} style={style} {...props}>
       {children}
     </div>
   );

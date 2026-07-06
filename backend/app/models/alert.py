@@ -34,8 +34,18 @@ class Alert(Base):
     is_dismissed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
+    # CMMS Additions
+    assigned_to = Column(String, ForeignKey("users.id"), nullable=True)
+    status = Column(String(20), default="pending") # pending, accepted, in_progress, resolved, verified, closed
+    priority = Column(String(20), default="medium") # low, medium, high, critical
+    accepted_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    verified_at = Column(DateTime, nullable=True)
+
     # Relationships
     equipment = relationship("Equipment", back_populates="alerts")
+    assigned_user = relationship("User", back_populates="assigned_alerts")
 
 
 class MaintenanceLog(Base):
@@ -51,6 +61,9 @@ class MaintenanceLog(Base):
     parts_replaced = Column(Text, nullable=True)
     cost = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
+    resolution = Column(Text, nullable=True)
+    repair_duration_minutes = Column(Integer, nullable=True)
+    follow_up_required = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

@@ -5,6 +5,7 @@ import { ShieldCheck, Lock, LogIn, X, AlertTriangle } from 'lucide-react';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
+  const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [shaking, setShaking] = useState(false);
   const { login, loading, error, clearError } = useAuthStore();
@@ -20,9 +21,9 @@ const AdminLogin = () => {
     if (!password.trim()) return;
 
     try {
-      await login(password);
-      // On success, navigate to settings
-      setActivePage('settings');
+      await login(employeeId, password);
+      // On success, navigate to dashboard
+      setActivePage('dashboard');
     } catch {
       // Trigger shake animation
       setShaking(true);
@@ -56,11 +57,11 @@ const AdminLogin = () => {
 
         {/* Title */}
         <h2 className="admin-login-title">
-          Admin <span style={{ color: 'var(--color-accent-lime)' }}>Access</span>
+          System <span style={{ color: 'var(--color-accent-lime)' }}>Access</span>
         </h2>
         <p className="admin-login-subtitle">
-          Enter the admin password to unlock data management,<br />
-          upload tools, and system settings.
+          Enter your Employee ID and password to access<br />
+          the Sentry Fab Dashboard.
         </p>
 
         {/* Form */}
@@ -72,15 +73,30 @@ const AdminLogin = () => {
             </div>
           )}
 
+          <div className="admin-input-group" style={{ marginBottom: '16px' }}>
+            <label htmlFor="employee-id">Employee ID</label>
+            <input
+              id="employee-id"
+              ref={inputRef}
+              type="text"
+              className="admin-input"
+              placeholder="e.g. EMP001"
+              value={employeeId}
+              onChange={(e) => {
+                setEmployeeId(e.target.value);
+                if (error) clearError();
+              }}
+            />
+          </div>
+
           <div className="admin-input-group">
-            <label htmlFor="admin-password">Admin Password</label>
+            <label htmlFor="admin-password">Password</label>
             <Lock size={16} className="admin-input-icon" />
             <input
               id="admin-password"
-              ref={inputRef}
               type="password"
               className="admin-input"
-              placeholder="Enter admin secret..."
+              placeholder="Enter password..."
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -93,15 +109,15 @@ const AdminLogin = () => {
           <button
             type="submit"
             className="admin-login-submit"
-            disabled={loading || !password.trim()}
+            disabled={loading || !password.trim() || !employeeId.trim()}
           >
             <LogIn size={18} />
-            {loading ? 'Authenticating...' : 'Unlock Admin Panel'}
+            {loading ? 'Authenticating...' : 'Secure Login'}
           </button>
         </form>
 
-        <p className="admin-login-footer">
-          Admin access is required for data uploads and system configuration.
+        <p className="admin-login-footer" style={{ marginTop: '24px' }}>
+          New Employee? <span style={{ color: 'var(--color-accent-lime)', cursor: 'pointer', fontWeight: 600 }} onClick={() => setActivePage('register')}>Register Here</span>
         </p>
       </div>
     </div>

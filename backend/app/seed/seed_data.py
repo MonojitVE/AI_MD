@@ -344,7 +344,7 @@ from app.models.equipment import SensorReading
 
 def seed_database():
     """Main function to seed the entire database with realistic data."""
-    print("🏭 Starting database seeding...")
+    print("Starting database seeding...")
 
     # Create all tables
     Base.metadata.drop_all(bind=sync_engine)
@@ -354,6 +354,37 @@ def seed_database():
     session = SyncSessionLocal()
 
     try:
+        from app.models.user import User
+        from app.core.security import hash_password
+
+        # 0. Create admin user
+        admin_user = User(
+            employee_id="ADMIN001",
+            first_name="System",
+            last_name="Administrator",
+            email="admin@factory.com",
+            role="admin",
+            department="IT",
+            password_hash=hash_password("Admin@123"),
+            is_active=True
+        )
+        session.add(admin_user)
+        
+        # Create an employee user
+        employee_user = User(
+            employee_id="EMP001",
+            first_name="James",
+            last_name="Morrison",
+            email="j.morrison@factory.com",
+            role="employee",
+            department="Maintenance",
+            password_hash=hash_password("Employee@123"),
+            is_active=True
+        )
+        session.add(employee_user)
+        session.flush()
+        print(f"  ✓ Admin and Employee users created")
+
         # 1. Create equipment
         now = datetime.utcnow()
         equipment_list = []
@@ -419,11 +450,11 @@ def seed_database():
         print(f"  ✓ {len(forecasts)} forecast records created")
 
         session.commit()
-        print("\n🎉 Database seeding complete!")
+        print("\nDatabase seeding complete!")
 
     except Exception as e:
         session.rollback()
-        print(f"\n❌ Seeding failed: {e}")
+        print(f"\nSeeding failed: {e}")
         raise
     finally:
         session.close()

@@ -7,14 +7,15 @@ import datetime
 
 from app.database import get_db
 from app.models.equipment import Equipment, SensorReading
-from app.auth_deps import require_admin
+from app.core.permissions import require_admin
+from app.models.user import User
 
 router = APIRouter(prefix="/api/settings", tags=["Settings"])
 
 @router.post("/clear-data")
 async def clear_data(
     db: AsyncSession = Depends(get_db),
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Wipe synthetic sensor readings and related data to prepare for real data."""
     try:
@@ -32,7 +33,7 @@ async def clear_data(
 async def upload_data(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Accepts a CSV of sensor readings, parses it, and inserts it into the database."""
     if not file.filename.endswith('.csv'):
@@ -82,7 +83,7 @@ async def upload_data(
 @router.post("/retrain-models")
 async def retrain_models(
     background_tasks: BackgroundTasks,
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Triggers ML model retraining in the background."""
     def run_training():

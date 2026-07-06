@@ -9,11 +9,12 @@ from datetime import datetime, timedelta
 from app.database import get_db
 from app.models.equipment import Equipment, SensorReading
 from app.models.defect import DefectRecord
-from app.models.alert import Alert
+from app.models.alert import Alert, MaintenanceLog
 from app.schemas.equipment import (
     EquipmentResponse, EquipmentDetailResponse, SensorReadingCreate, SensorReadingResponse
 )
-from app.auth_deps import require_admin
+from app.core.permissions import require_admin
+from app.models.user import User
 
 router = APIRouter(prefix="/api/equipment", tags=["Equipment"])
 
@@ -42,6 +43,12 @@ async def list_equipment(
             "model_number": eq.model_number,
             "install_date": eq.install_date.isoformat() if eq.install_date else None,
             "last_maintenance": eq.last_maintenance.isoformat() if eq.last_maintenance else None,
+            "purchase_date": eq.purchase_date.isoformat() if eq.purchase_date else None,
+            "warranty_expiry": eq.warranty_expiry.isoformat() if eq.warranty_expiry else None,
+            "expected_lifetime_years": eq.expected_lifetime_years,
+            "replacement_cost": eq.replacement_cost,
+            "calibration_schedule_days": eq.calibration_schedule_days,
+            "last_calibration_date": eq.last_calibration_date.isoformat() if eq.last_calibration_date else None,
         }
         for eq in equipment
     ]
@@ -92,6 +99,12 @@ async def get_equipment_detail(equipment_id: int, db: AsyncSession = Depends(get
         "model_number": equipment.model_number,
         "install_date": equipment.install_date.isoformat() if equipment.install_date else None,
         "last_maintenance": equipment.last_maintenance.isoformat() if equipment.last_maintenance else None,
+        "purchase_date": equipment.purchase_date.isoformat() if equipment.purchase_date else None,
+        "warranty_expiry": equipment.warranty_expiry.isoformat() if equipment.warranty_expiry else None,
+        "expected_lifetime_years": equipment.expected_lifetime_years,
+        "replacement_cost": equipment.replacement_cost,
+        "calibration_schedule_days": equipment.calibration_schedule_days,
+        "last_calibration_date": equipment.last_calibration_date.isoformat() if equipment.last_calibration_date else None,
         "alert_count": alert_count_val,
         "defect_count": defect_count_val,
         "latest_readings": [
@@ -140,7 +153,7 @@ async def add_sensor_reading(
     equipment_id: int,
     reading: SensorReadingCreate,
     db: AsyncSession = Depends(get_db),
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Ingest a new sensor reading."""
     equipment = await db.execute(select(Equipment).where(Equipment.id == equipment_id))
@@ -162,3 +175,49 @@ async def add_sensor_reading(
     await db.flush()
 
     return {"id": new_reading.id, "status": "created"}
+
+@router.get("/{equipment_id}/timeline")
+async def get_equipment_timeline(equipment_id: int, db: AsyncSession = Depends(get_db)):
+    """Aggregated timeline of alerts and maintenance for this equipment."""
+    
+    # 1. Fetch alerts
+    alerts_result = await db.execute(
+        select(Alert).where(Alert.equipment_id == equipment_id)
+    )
+    alerts = alerts_result.scalars().all()
+    
+    # 2. Fetch maintenance logs
+    logs_result = await db.execute(
+        select(MaintenanceLog).where(MaintenanceLog.equipment_id == equipment_id)
+    )
+    logs = logs_result.scalars().all()
+    
+    timeline = []
+    
+    for alert in alerts:
+        timeline.append({
+            "type": "alert",
+            "id": alert.id,
+            "timestamp": alert.created_at.isoformat(),
+            "title": alert.title,
+            "description": alert.message,
+            "severity": alert.severity,
+            "status": alert.status
+        })
+        
+    for log in logs:
+        timeline.append({
+            "type": "maintenance",
+            "id": log.id,
+            "timestamp": log.performed_at.isoformat() if log.performed_at else log.created_at.isoformat(),
+            "title": f"Maintenance: {log.action_taken}",
+            "description": log.resolution_notes or "",
+            "cost": log.cost,
+            "duration": log.repair_duration_minutes
+        })
+        
+    # Sort chronologically (newest first)
+    timeline.sort(key=lambda x: x["timestamp"], reverse=True)
+    
+    return timeline
+

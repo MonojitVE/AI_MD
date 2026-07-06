@@ -1,0 +1,148 @@
+.reports-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.report-card {
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent-blue);
+}
+
+.report-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.report-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--color-on-primary);
+  margin-bottom: 4px;
+}
+
+.report-type {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-on-dark-muted);
+}
+
+.report-date {
+  font-size: 0.85rem;
+  color: var(--color-on-dark-faint);
+}
+
+/* Modal styling for Markdown Report */
+.markdown-body {
+  color: var(--color-on-primary);
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+.markdown-body h1 {
+  font-size: 1.8rem;
+  font-family: var(--font-display);
+  margin-top: 24px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-hairline-violet);
+  padding-bottom: 8px;
+}
+
+.markdown-body h2 {
+  font-size: 1.4rem;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.markdown-body h3 {
+  font-size: 1.2rem;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.markdown-body p {
+  margin-bottom: 16px;
+}
+
+.markdown-body ul, .markdown-body ol {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.markdown-body li {
+  margin-bottom: 6px;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+
+.markdown-body th, .markdown-body td {
+  border: 1px solid var(--color-hairline-violet);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background-color: var(--color-surface-night);
+  font-weight: 600;
+}
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: #000;
+    background-color: #fff;
+  }
+
+  .markdown-body h1, 
+  .markdown-body h2, 
+  .markdown-body h3, 
+  .markdown-body p, 
+  .markdown-body th, 
+  .markdown-body td, 
+  .markdown-body li {
+    color: #000 !important;
+  }
+  
+  .markdown-body th, .markdown-body td {
+    border: 1px solid #ddd !important;
+  }
+}

@@ -24,3 +24,29 @@ export const dismissAlert = async (id) => {
   const response = await client.patch(`/api/alerts/${id}/dismiss`);
   return response.data;
 };
+
+// CMMS Endpoints
+export const acceptAlert = async (id) => {
+  const response = await client.patch(`/api/alerts/${id}/accept`);
+  return response.data;
+};
+
+export const startAlert = async (id) => {
+  const response = await client.patch(`/api/alerts/${id}/start`);
+  return response.data;
+};
+
+export const resolveAlert = async (id, data) => {
+  const response = await client.patch(`/api/alerts/${id}/resolve`, data);
+  return response.data;
+};
+
+export const verifyAlert = async (id) => {
+  const response = await client.patch(`/api/alerts/${id}/verify`);
+  return response.data;
+};
+
+export const createManualAlert = async (data) => {
+  const response = await client.post('/api/alerts/manual', data);
+  return response.data;
+};

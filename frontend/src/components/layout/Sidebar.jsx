@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Factory,
   ShieldCheck,
-  LogOut
+  LogOut,
+  FileText
 } from 'lucide-react';
 import useAppStore from '../../store/useAppStore';
 import useAuthStore from '../../store/useAuthStore';
@@ -38,8 +39,9 @@ const Sidebar = () => {
     { id: 'ai_assistant', label: 'AI Assistant', icon: Bot },
   ];
 
-  // Only show Settings for admins
+  // Only show Settings & Reports for admins
   if (isAdmin) {
+    navItems.push({ id: 'reports', label: 'Executive Reports', icon: FileText });
     navItems.push({ id: 'settings', label: 'Settings', icon: Settings });
   }
 
@@ -96,7 +98,7 @@ const Sidebar = () => {
         >
           {isAdmin ? <LogOut size={20} /> : <ShieldCheck size={20} />}
           <span className="nav-label">
-            {isAdmin ? 'Logout Admin' : 'Admin Login'}
+            {isAdmin ? 'Logout Admin' : 'Login'}
           </span>
           {isAdmin && !sidebarCollapsed && (
             <span style={{

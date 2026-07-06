@@ -37,6 +37,12 @@ class Equipment(Base):
     last_maintenance = Column(DateTime, nullable=True)
     manufacturer = Column(String(100), nullable=True)
     model_number = Column(String(50), nullable=True)
+    purchase_date = Column(DateTime, nullable=True)
+    warranty_expiry = Column(DateTime, nullable=True)
+    expected_lifetime_years = Column(Float, nullable=True)
+    replacement_cost = Column(Float, nullable=True)
+    calibration_schedule_days = Column(Integer, nullable=True)
+    last_calibration_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { sendChatMessage, getAIStatus, getAutoInsights } from '../api/assistant';
 import useDashboardStore from '../store/useDashboardStore';
 import Card from '../components/ui/Card';
@@ -144,7 +145,9 @@ const AIAssistant = () => {
           <div className="chat-history">
             {messages.map((msg, idx) => (
               <div key={idx} className={`chat-message ${msg.sender}`}>
-                <div style={{ whiteSpace: 'pre-line' }}>{msg.text}</div>
+                <div className="markdown-chat">
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                </div>
                 <span className="chat-message-meta">{msg.sender}</span>
               </div>
             ))}

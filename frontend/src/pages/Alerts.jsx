@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { getAlertsList, markAlertRead, markAllAlertsRead, dismissAlert, getAlertCounts } from '../api/alerts';
+import { getAlertsList, markAlertRead, markAllAlertsRead, dismissAlert, getAlertCounts, acceptAlert, startAlert, resolveAlert, verifyAlert, createManualAlert } from '../api/alerts';
+import ManualAlertModal from '../components/ui/ManualAlertModal';
+import ResolveAlertModal from '../components/ui/ResolveAlertModal';
+import TimelineModal from '../components/ui/TimelineModal';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -25,6 +28,10 @@ const AlertsPage = () => {
   const [loading, setLoading] = useState(true);
   const [severityFilter, setSeverityFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [resolvingAlertId, setResolvingAlertId] = useState(null);
+  const [timelineAlert, setTimelineAlert] = useState(null);
+  const { user } = useAuthStore();
 
   const fetchData = async () => {
     try {
@@ -64,6 +71,20 @@ const AlertsPage = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleAccept = async (id) => { await acceptAlert(id); fetchData(); };
+  const handleStart = async (id) => { await startAlert(id); fetchData(); };
+  const handleResolveSubmit = async (data) => { 
+    await resolveAlert(resolvingAlertId, data); 
+    setResolvingAlertId(null);
+    fetchData(); 
+  };
+  const handleVerify = async (id) => { await verifyAlert(id); fetchData(); };
+  const handleManualSubmit = async (data) => {
+    await createManualAlert(data);
+    setShowManualModal(false);
+    fetchData();
   };
 
   const handleDismiss = async (id) => {
@@ -145,6 +166,9 @@ const AlertsPage = () => {
             <CheckCheck size={16} /> Mark all read
           </Button>
         )}
+        <Button variant="primary" onClick={() => setShowManualModal(true)} style={{ marginLeft: 'auto' }}>
+          Report Issue
+        </Button>
       </div>
 
       {/* Feed list */}
@@ -164,12 +188,20 @@ const AlertsPage = () => {
                 <p className="alert-feed-desc">{alert.message}</p>
                 <div className="alert-feed-meta">
                   <span>Category: {alert.type.toUpperCase()}</span>
+                  <span>Status: {alert.status?.toUpperCase() || 'PENDING'}</span>
                   {alert.equipment_name && <span>Equipment: {alert.equipment_name}</span>}
                   <span>Timestamp: {formatDate(alert.created_at)}</span>
                 </div>
               </div>
 
-              {isAdmin && (
+              <div className="alert-feed-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                <Button onClick={() => setTimelineAlert(alert)} variant="ghost" size="small">Timeline</Button>
+                {user?.role === 'employee' && alert.status === 'pending' && <Button onClick={() => handleAccept(alert.id)} variant="primary" size="small">Accept</Button>}
+                {user?.role === 'employee' && alert.status === 'accepted' && alert.assigned_to === user?.id && <Button onClick={() => handleStart(alert.id)} variant="primary" size="small">Start Work</Button>}
+                {user?.role === 'employee' && alert.status === 'in_progress' && alert.assigned_to === user?.id && <Button onClick={() => setResolvingAlertId(alert.id)} variant="primary" size="small">Resolve</Button>}
+                {user?.role === 'admin' && alert.status === 'resolved' && <Button onClick={() => handleVerify(alert.id)} variant="primary" size="small">Verify</Button>}
+                </div>
+                {isAdmin && (
                 <div className="alert-feed-actions">
                   {!alert.is_read && (
                     <button 
@@ -199,6 +231,9 @@ const AlertsPage = () => {
           </div>
         )}
       </div>
+      {showManualModal && <ManualAlertModal onClose={() => setShowManualModal(false)} onSubmit={handleManualSubmit} />}
+      {resolvingAlertId && <ResolveAlertModal onClose={() => setResolvingAlertId(null)} onSubmit={handleResolveSubmit} />}
+      {timelineAlert && <TimelineModal alert={timelineAlert} onClose={() => setTimelineAlert(null)} />}
     </div>
   );
 };

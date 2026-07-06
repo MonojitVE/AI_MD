@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import useDashboardStore from '../store/useDashboardStore';
 import useAppStore from '../store/useAppStore';
+import useAuthStore from '../store/useAuthStore';
+import EmployeeDashboard from './EmployeeDashboard';
 import { getSensorTrends } from '../api/equipment';
 import StatCard from '../components/ui/StatCard';
 import Card from '../components/ui/Card';
@@ -23,6 +25,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { overview, loading, fetchOverview } = useDashboardStore();
   const { setActivePage } = useAppStore();
+  const { user } = useAuthStore();
   const [sensorTrends, setSensorTrends] = useState([]);
   const [trendsLoading, setTrendsLoading] = useState(false);
 
@@ -41,6 +44,10 @@ const Dashboard = () => {
 
     fetchTrends();
   }, [overview]);
+
+  if (user?.role === 'employee') {
+    return <EmployeeDashboard />;
+  }
 
   if (loading && !overview) {
     return <Loader type="shimmer" count={6} height="120px" />;

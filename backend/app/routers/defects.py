@@ -10,7 +10,8 @@ from app.database import get_db
 from app.models.equipment import Equipment, SensorReading
 from app.models.defect import DefectRecord
 from app.ml.defect_detection import DefectDetectionModel
-from app.auth_deps import require_admin
+from app.core.permissions import require_admin
+from app.models.user import User
 
 router = APIRouter(prefix="/api/defects", tags=["Defect Detection"])
 
@@ -119,7 +120,7 @@ async def get_defect_stats(db: AsyncSession = Depends(get_db)):
 async def run_defect_detection(
     equipment_id: int = None,
     db: AsyncSession = Depends(get_db),
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Run defect detection on latest sensor data."""
     if equipment_id:
@@ -164,7 +165,7 @@ async def run_defect_detection(
 async def resolve_defect(
     defect_id: int,
     db: AsyncSession = Depends(get_db),
-    _admin: str = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
     """Mark a defect as resolved."""
     result = await db.execute(select(DefectRecord).where(DefectRecord.id == defect_id))

@@ -2,12 +2,16 @@
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.database import get_db
 from app.models.equipment import Equipment
 from app.services.groq_service import groq_service
 from app.schemas.analytics import ChatRequest, ChatResponse
+
+from app.core.permissions import get_current_user
+from app.models.user import User
+from app.models.alert import Alert
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
 
@@ -22,8 +26,41 @@ async def get_ai_status():
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """Send a message to the AI assistant."""
+    if not request.context:
+        request.context = {}
+    request.context.update({
+        "User": f"{current_user.first_name} {current_user.last_name}",
+        "Role": current_user.role,
+        "Department": current_user.department or "Unknown"
+    })
+    
+    # Add Executive Context for Admins
+    if current_user.role in ["admin", "manager"]:
+        from app.models.equipment import Equipment
+        from app.models.inventory import InventoryItem
+        
+        eq_res = await db.execute(select(Equipment.status, func.count(Equipment.id)).group_by(Equipment.status))
+        request.context["Equipment_Status_Summary"] = ", ".join([f"{count} {status}" for status, count in eq_res.all()])
+        
+        inv_res = await db.execute(select(func.count(InventoryItem.id)).where(InventoryItem.current_stock <= InventoryItem.min_stock))
+        low_stock_count = inv_res.scalar_one()
+        request.context["Low_Stock_Inventory_Items"] = low_stock_count
+    
+    # Add Maintenance Context
+    if current_user.role == "employee":
+        query = select(Alert).where(Alert.assigned_to == current_user.id, Alert.status.in_(["pending", "accepted", "in_progress"]))
+        res = await db.execute(query)
+        jobs = res.scalars().all()
+        request.context["My_Active_Jobs"] = f"{len(jobs)} active jobs"
+        if jobs:
+            request.context["Job_Details"] = ", ".join([f"Alert {j.id}: {j.title} ({j.status})" for j in jobs])
+    
     result = await groq_service.chat(request.message, request.context)
     return result
 

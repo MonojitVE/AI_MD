@@ -1,13 +1,18 @@
 """Main entry point for the FastAPI application."""
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.logger import logger
 
 from app.config import settings
 from app.database import create_tables
 from app.routers import (
     auth,
+    users,
     dashboard,
     equipment,
     maintenance,
@@ -17,13 +22,35 @@ from app.routers import (
     ai_assistant,
     analytics,
     settings as settings_router,
+    reports,
+    ai_reports,
 )
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Enterprise-grade AI Manufacturing Dashboard API",
+    description="Enterprise-grade AI Manufacturing Dashboard API with CMMS and EAM capabilities.",
+    contact={
+        "name": "Sentry Fab Support",
+        "email": "support@sentryfab.com",
+    },
 )
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error(f"Database error on {request.url.path}: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Database Error", "detail": str(exc)},
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error on {request.url.path}: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error"},
+    )
 
 # CORS middleware config
 import re
@@ -52,6 +79,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(dashboard.router)
 app.include_router(equipment.router)
 app.include_router(maintenance.router)
@@ -61,14 +89,20 @@ app.include_router(alerts.router)
 app.include_router(ai_assistant.router)
 app.include_router(analytics.router)
 app.include_router(settings_router.router)
+app.include_router(reports.router)
+app.include_router(ai_reports.router)
 
 
 @app.on_event("startup")
 async def on_startup():
-    """Startup event: initialize db, auto-seed if empty, and train ML models."""
-    print("🚀 App starting up...")
+    """Startup event: initialize db, auto-seed if empty, train ML, start scheduler."""
+    logger.info("🚀 App starting up...")
     await create_tables()
-    print("  ✓ Database tables verified")
+    logger.info("Database tables verified")
+    
+    # Start background scheduler
+    from app.core.scheduler import start_scheduler
+    start_scheduler()
 
     # Auto-seed if database is empty (first deployment)
     try:
